@@ -1,0 +1,18 @@
+extends baseEmail
+
+block content
+  p Hola #{firstName},
+  p Bienvenido a NOVA TECHNOLOGY ,estamos contento de verte 🎉🙏
+  p Somos una familia grande , asegurate de subir una foto de perfil usando este enlace abajo👇!
+  table.btn.btn-primary(role='presentation', border='0', cellpadding='0', cellspacing='0')
+    tbody
+      tr
+        td(align='left')
+          table(role='presentation', border='0', cellpadding='0', cellspacing='0')
+            tbody
+              tr
+                td
+                  a(href=`${url}`, target='_blank') Subir Foto de Perfil
+  p= url                
+  p Si necesitas cualquier ayuda haznos saber sin problema estaremos aqui para ayudarte con mucho amor !
+  p - Nicolas Trabichet , CEO

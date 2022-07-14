@@ -1,0 +1,16 @@
+extends baseEmail
+
+block content
+  h1 Nuevo mensaje
+  h2 Tiene una nueva consulta de parte de : #{fullname}
+  table.btn.btn-primary(role='presentation', border='0', cellpadding='0', cellspacing='0')
+    tbody
+      tr
+        td(align='left')
+          table(role='presentation', border='0', cellpadding='0', cellspacing='0')
+            tbody
+              tr
+                td
+  p= subject
+  a(href=`tel:${phone}`, target='_blank')= phone 
+  p - Nicolas Trabichet , CEO
