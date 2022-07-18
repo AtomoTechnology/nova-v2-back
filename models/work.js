@@ -8,6 +8,17 @@ module.exports = (sequelize, DataTypes) => {
       // join with uuid of User table...
       Work.belongsTo(models.User, { foreignKey: 'UserId', targetKey: 'uuid' });
       // models.User.hasMany(models.Work, { foreignKey: 'UserId', sourceKey: 'uuid' });
+      Work.belongsToMany(models.State, {
+        through: 'worksstates',
+        as: 'statess',
+        foreignKey: 'WorkId',
+        sourceKey: 'uuid',
+      });
+      Work.hasMany(models.WorksState, {
+        as: 'states',
+        foreignKey: 'WorkId',
+        sourceKey: 'uuid',
+      });
 
       //    estado: {
       //   type: Schema.Types.ObjectId,
@@ -33,9 +44,9 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.UUID,
         defaultValue: DataTypes.UUIDV4,
       },
-      states: {
-        type: DataTypes.JSON,
-      },
+      // states: {
+      //   type: DataTypes.JSON,
+      // },
 
       codigo: {
         type: DataTypes.STRING(20),

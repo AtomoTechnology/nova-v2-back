@@ -1,6 +1,7 @@
 const AppError = require('../helpers/AppError');
 const catchAsync = require('../helpers/catchAsync');
 const EmailContact = require('../helpers/sendContactMail');
+const { Op } = require('sequelize');
 
 const filterField = (allFields, allowedFiels) => {
   var fields = {};
@@ -16,14 +17,12 @@ const filterField = (allFields, allowedFiels) => {
 
 exports.create = (model, fieldsAllowed = null, action = null) =>
   catchAsync(async (req, res, next) => {
-    console.log(req.body);
     filteredFields = { ...req.body };
     if (fieldsAllowed != null) {
       filteredFields = filterField(req.body, fieldsAllowed);
     }
 
     const doc = await model.create(filteredFields);
-    console.log(doc.dataValues);
 
     if (action != null) {
       if (action.mail) {
@@ -42,19 +41,32 @@ exports.create = (model, fieldsAllowed = null, action = null) =>
 
 exports.all = (Model, options = null) =>
   catchAsync(async (req, res, next) => {
+    if (req.query.or) {
+      const StatedIds = req.query.StateId.split(',');
+      req.query = {
+        StateId: [StatedIds[0], StatedIds[1]],
+      };
+      delete req.query.or;
+    }
+    if (req.query.productWithStock) {
+      req.query = {
+        stock: {
+          [Op.ne]: 0,
+        },
+      };
+      delete req.query.productWithStock;
+    }
+
     if (options) {
       var { include } = options;
     }
-    // console.log('innn');
 
     const docs = await Model.findAll({
       where: req.query,
       include: include,
-      order: [
-        // will return `name`
-        ['createdAt', 'DESC'],
-      ],
+      order: [['createdAt', 'DESC']],
     });
+
     res.status(200).json({
       status: 'success',
       ok: true,
@@ -63,23 +75,9 @@ exports.all = (Model, options = null) =>
     });
   });
 
-// exports.all = (model, options = null) =>
-//   catchAsync(async (req, res, next) => {
-//     const docs = await model.findAll({ where: req.query });
-
-//     res.status(200).json({
-//       status: 'success',
-//       results: docs.length,
-//       data: {
-//         data: docs,
-//       },
-//     });
-//   });
-
 exports.find = (model, options = null) =>
   catchAsync(async (req, res, next) => {
     const id = req.params.id;
-    console.log(req.body);
     if (options) {
       var { include } = options;
     }
@@ -95,7 +93,6 @@ exports.find = (model, options = null) =>
   });
 exports.findByUuid = (model, options = null) =>
   catchAsync(async (req, res, next) => {
-    console.log(req.query.uuid);
     if (options) {
       var { include } = options;
     }
@@ -112,7 +109,6 @@ exports.findByUuid = (model, options = null) =>
 
 exports.update = (model, fieldsAllowed) =>
   catchAsync(async (req, res, next) => {
-    console.log(req.body);
     if (!req.params.id) {
       return next(new AppError('Necesita un id para poder actualizar un documento', 401));
     }
@@ -126,7 +122,7 @@ exports.update = (model, fieldsAllowed) =>
         id: req.params.id,
       },
     });
-    console.log(doc);
+
     if (doc[0] === 0) return next(new AppError('No hay documento con ese ID!!!', 404));
     res.status(200).json({
       status: 'success',

@@ -1,6 +1,10 @@
 const router = require('express').Router();
 const banner = require('../controllers/bannerController');
-router.route('/').get(banner.all).post(banner.create);
-router.delete('/:id', banner.delete);
+const authController = require('../controllers/authController');
 
+router
+  .route('/')
+  .get(banner.all)
+  .post(authController.protect, authController.restrictTo('admin', 'tecnico'), banner.create);
+router.delete('/:id', authController.protect, authController.restrictTo('admin', 'tecnico'), banner.delete);
 module.exports = router;

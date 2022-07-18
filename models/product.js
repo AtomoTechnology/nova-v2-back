@@ -31,6 +31,12 @@ module.exports = (sequelize, DataTypes) => {
             msg: 'El almacenamiento no puede ser vacío',
           },
         },
+        // get() {
+        //   return JSON.parse(this.getDataValue('storage'));
+        // },
+        // set(value) {
+        //   this.setDataValue('storage', JSON.stringify(value));
+        // },
       },
       stock: {
         type: DataTypes.INTEGER,
@@ -47,6 +53,30 @@ module.exports = (sequelize, DataTypes) => {
             msg: 'El color no puede ser vacío',
           },
         },
+        // get() {
+        //   return JSON.parse(this.getDataValue('colours'));
+        // },
+        // set(value) {
+        //   // Storing passwords in plaintext in the database is terrible.
+        //   // Hashing the value with an appropriate cryptographic hash function is better.
+        //   this.setDataValue('colours', JSON.stringify(value));
+        // },
+      },
+      photos: {
+        type: DataTypes.JSON,
+        validate: {
+          notEmpty: {
+            msg: 'Hay que subir una imagen',
+          },
+        },
+        // get() {
+        //   return JSON.parse(this.getDataValue('photos'));
+        // },
+        // set(value) {
+        //   // Storing passwords in plaintext in the database is terrible.
+        //   // Hashing the value with an appropriate cryptographic hash function is better.
+        //   this.setDataValue('photos', JSON.stringify(value));
+        // },
       },
       trademark: {
         type: DataTypes.STRING,
@@ -69,15 +99,6 @@ module.exports = (sequelize, DataTypes) => {
         validate: {
           notEmpty: {
             msg: 'El nombre no puede ser vacío',
-          },
-        },
-      },
-      photo: {
-        type: DataTypes.TEXT('long'),
-        allowNull: false,
-        validate: {
-          notEmpty: {
-            msg: 'La imagen no puede ser vacío',
           },
         },
       },

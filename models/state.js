@@ -2,7 +2,20 @@
 const { Model } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
   class State extends Model {
-    static associate(models) {}
+    static associate(models) {
+      State.belongsToMany(models.Work, {
+        through: 'worksstates',
+        as: 'works',
+        foreignKey: 'StateId',
+        sourceKey: 'uuid',
+      });
+
+      State.hasMany(models.WorksState, {
+        as: 'WorksStates',
+        foreignKey: 'StateId',
+        sourceKey: 'uuid',
+      });
+    }
   }
   State.init(
     {
@@ -23,9 +36,6 @@ module.exports = (sequelize, DataTypes) => {
           msg: 'EL nombre debe ser uníco',
         },
         validate: {
-          // isAlphanumeric: {
-          //   msg: 'El nombre debe contener solo caracteres [a-zA-Z]',
-          // },
           notEmpty: {
             msg: 'El nombre no puede ser vacío',
           },

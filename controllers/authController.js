@@ -1,7 +1,6 @@
 const crypto = require('crypto');
 const { promisify } = require('util');
 const catchAsync = require('../helpers/catchAsync');
-// const User = require('./../models2/userModel');
 const { User } = require('./../models');
 const jwt = require('jsonwebtoken');
 const AppError = require('../helpers/AppError');
@@ -10,6 +9,7 @@ const Email = require('../helpers/sendEmail');
 const { Op } = require('sequelize');
 const bcrypt = require('bcryptjs');
 const factory = require('./factoryController');
+const EmailResetPassword = require('../helpers/resetPassword');
 
 const createToken = (id) => {
   return jwt.sign({ id }, process.env.SECRET_TOKEN_NOVA, {
@@ -25,9 +25,19 @@ const changePasswordAfter = function (user, jwtIat) {
   return false;
 };
 
+const createPasswordResetToken = (user) => {
+  //create token
+  const resetToken = crypto.randomBytes(32).toString('hex');
+  //encrypt the token and save to the database
+  user.passwordResetToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+
+  //store the time plus 10 mns to the satabase
+  user.passwordResetExpires = Date.now() + 10 * 60 * 1000;
+  //return the token without encrypt
+  return resetToken;
+};
+
 const createSendToken = (user, statusCode, res) => {
-  // console.log('User JWT : ', user);
-  // console.log('User id : ', user.id);
   const token = createToken(user.id);
 
   user.password = undefined;
@@ -58,8 +68,8 @@ exports.signUp = catchAsync(async (req, res, next) => {
 
   //send email ${req.get('host')}
 
-  // const url = `${req.protocol}://novatechnologyargentina.com/clients/${newUser._id}`;
-  // await new Email(newUser, url).sendWelcome();
+  const url = `${req.protocol}://novatechnologyargentina.com/clients/${newUser.id}`;
+  await new Email(newUser, url).sendWelcome();
 
   createSendToken(newUser, 201, res);
 });
@@ -72,7 +82,6 @@ exports.signIn = catchAsync(async (req, res, next) => {
   }
 
   const user = await User.findOne({ where: { dni } });
-  // console.log('login', user);
 
   if (!user || !(await bcrypt.compare(password, user.password))) {
     return next(new AppError('DNI y/o Contraseña incorrecto.', 401));
@@ -80,8 +89,14 @@ exports.signIn = catchAsync(async (req, res, next) => {
   if (!user.active) {
     return next(new AppError('Tu cuenta está inactivo! Activalo para poder iniciar sesión', 401));
   }
+
+  if (req.body.role) {
+    if (user.role != 'admin' && user.role != 'tecnico') {
+      return next(new AppError('Este espacio es solamente para administrador y tecnicos !', 401));
+    }
+  }
+
   req.user = user.dataValues;
-  console.log('req saved: ', req.user);
 
   //create token
   createSendToken(user, 200, res);
@@ -102,7 +117,6 @@ exports.protect = catchAsync(async (req, res, next) => {
 
   const decoded = await promisify(jwt.verify)(token, process.env.SECRET_TOKEN_NOVA);
 
-  console.log(decoded);
   const currentUser = await User.findByPk(decoded.id);
   if (!currentUser) {
     return next(new AppError('Este usuario ya no existe ', 404));
@@ -129,36 +143,33 @@ exports.restrictTo = (...roles) => {
 
 exports.forgotPassword = catchAsync(async (req, res, next) => {
   //get the user and validate it
-  const user = await User.findOne({ email: req.body.email });
+  const user = await User.findOne({ where: { email: req.body.email } });
   if (!user) {
-    return next(new AppError('This is no user with this email ..', 404));
+    return next(new AppError('No hay usuario con este  email ..', 404));
   }
 
   //2) generate the random  token
-  const resetToken = user.createPasswordResetToken();
+  const resetToken = createPasswordResetToken(user);
 
   // we just modify data from the object  we have to save it
-  await user.save({ validateBeforeSave: false }); //
+  await user.save(); //
 
   //send email
-  const resetURL = `${req.protocol}://${req.get('host')}/api/v1/users/resetPassword/${resetToken}`;
-  const message = `¿Forgot your password ? click on this link : ${resetURL} to resetyour password.\n if you did forget your password ignore this email`;
+  const resetURL = `${req.protocol}://novatechnologyargentina.com/resetPassword/${resetToken}`;
+  const message = `¿Olvidaste tu contraseña ? hace click  en este enlace  : ${resetURL}  para resetear tu contraseña.`;
   try {
-    await sendEmail({
-      email: user.email,
-      subject: 'Your password reset token (valid for 10 mn)',
-      message,
-    });
+    await new EmailResetPassword({ url: resetURL, message }).sendResetPass();
 
     res.status(200).json({
+      ok: true,
       status: 'success',
       message: 'Token sent to email',
     });
   } catch (err) {
     user.passwordResetToken = undefined;
     user.passwordResetExpires = undefined;
-    await user.save({ validateBeforeSave: false });
-    return next(new AppError('There was a problem sending the email ', 500));
+    await user.save();
+    return next(new AppError('Hubo un problema al intentar mandarte el email! ', 500));
   }
 });
 
@@ -166,30 +177,40 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
   //Get Uer based on the token
   const hashToken = crypto.createHash('sha256').update(req.params.token).digest('hex');
   const user = await User.findOne({
-    passwordResetToken: hashToken,
-    passwordResetExpires: { $gt: Date.now() },
+    where: {
+      passwordResetToken: hashToken,
+      passwordResetExpires: { [Op.gt]: Date.now() },
+    },
   });
 
   if (!user) {
-    return next(new AppError('This is no user for this token. Token invalid or expired ..', 404));
+    return next(new AppError('No existe usuario con este token ! Token expirado o invalido...', 404));
   }
 
   //validate user and token
   user.password = req.body.password;
   user.passwordConfirm = req.body.passwordConfirm;
-  user.passwordResetToken = undefined;
-  user.passwordResetExpires = undefined;
-  await user.save();
+  user.passwordResetToken = null;
+  user.passwordResetExpires = null;
+
+  const usersave = await user.save();
+  // await User.update(user, {
+  //   where: {
+  //     id: user.id,
+  //   },
+  // });
+  res.json({
+    ok: true,
+    status: 'success',
+  });
 
   //Log in user again
-  createSendToken(user, 200, res);
+  // createSendToken(user, 200, res);
 });
 
 exports.updatePassword = catchAsync(async (req, res, next) => {
   // Get the user
   const user = await User.findOne({ where: { email: req.user.email, dni: req.user.dni } });
-  console.log('User : ', user);
-
   //check password
   // if (!user || !(await user.checkPassword(req.body.currentPassword, user.password))) {
   //   return next(new AppError('Contraseña invalida', 401));

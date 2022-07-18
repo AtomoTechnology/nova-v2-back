@@ -16,6 +16,9 @@ exports.create = catchAsync(async (req, res, next) => {
       storage: elem.storage,
       colour: elem.colour,
     });
+    const pro = await Product.findOne({ where: { id: elem.product.id } });
+    pro.stock = pro.stock - elem.quantity;
+    await pro.save();
   });
 
   res.json({
@@ -26,7 +29,6 @@ exports.create = catchAsync(async (req, res, next) => {
   });
 
   // const doc = await model.create(filteredFields);
-  // console.log(doc.dataValues);
 
   // if (action != null) {
   //   if (action.mail) {
@@ -47,10 +49,10 @@ exports.all = factory.all(Order, {
     {
       model: Detail,
       attributes: ['storage', 'colour', 'quantity'],
-      include: [{ model: Product, attributes: ['id', 'uuid', 'trademark', 'model', 'price'] }],
+      include: [{ model: Product, attributes: ['id', 'uuid', 'trademark', 'model', 'price', 'photos'] }],
     },
   ],
 });
-exports.delete = factory.delete(Detail);
-exports.update = factory.update(Detail, ['quantity']);
-exports.DeleteAll = factory.deleteAll(Detail);
+exports.delete = factory.delete(Order);
+exports.update = factory.update(Order, ['status']);
+exports.DeleteAll = factory.deleteAll(Order);

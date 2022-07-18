@@ -23,8 +23,6 @@ app.use(express.json());
 app.use(helmet());
 // app.use(mongoSanitize());
 
-console.log(process.env.NODE_ENV);
-
 app.use('/api/v2/banners', require('./router/bannerRoute'));
 app.use('/api/v2/expenses', require('./router/expensesRoute'));
 app.use('/api/v2/states', require('./router/stateRoute'));
