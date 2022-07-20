@@ -28,7 +28,7 @@ app.use('/api/v2/expenses', require('./router/expensesRoute'));
 app.use('/api/v2/states', require('./router/stateRoute'));
 app.use('/api/v2/users', require('./router/userRoute'));
 app.use('/api/v2/works', require('./router/workRoute'));
-app.use('/api/v2/queries', require('./router/queryRoute'));
+// app.use('/api/v2/queries', require('./router/queryRoute'));
 app.use('/api/v2/sales', require('./router/saleRoute'));
 app.use('/api/v2/products', require('./router/productRoute'));
 

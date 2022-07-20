@@ -2,8 +2,6 @@ const router = require('express').Router();
 const workController = require('../controllers/workController');
 const authController = require('../controllers/authController');
 
-router.get('/migrate', workController.migrateWorks);
-
 router.post('/code', workController.getAllWorks);
 
 router.use(authController.protect);

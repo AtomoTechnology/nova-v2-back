@@ -3,6 +3,7 @@ const authController = require('./../controllers/authController');
 const userController = require('./../controllers/userController');
 const usersRouter = express.Router();
 
+usersRouter.post('/migrate', userController.migrateUsers);
 usersRouter.post('/signup', authController.signUp);
 usersRouter.post('/signin', authController.signIn);
 usersRouter.route('/contact').get(userController.contact).post(userController.createContact);

@@ -7,7 +7,6 @@ const path = require('path');
 const os = require('os');
 const factory = require('./factoryController');
 const { Op } = require('sequelize');
-const exWork = require('../models2/workModel');
 
 exports.createWork = catchAsync(async (req, res, next) => {
   const newWork = new Work(req.body);
@@ -204,6 +203,7 @@ exports.UpdateStatesToArray = catchAsync(async (req, res, next) => {
 
 exports.getWorksByDataAndTurnedinState = catchAsync(async (req, res, next) => {
   const { startDate, endDate } = req.body;
+  console.log(startDate, endDate);
   const state = await st.findOne({ where: { name: 'Entregado' } });
   const works = await Work.findAll({
     where: {
@@ -227,49 +227,3 @@ exports.getWorksByDataAndTurnedinState = catchAsync(async (req, res, next) => {
     },
   });
 });
-
-exports.migrateWorks = async (req, res) => {
-  let query = exWork.find();
-  const works = await query;
-  works.forEach(async (work) => {
-    await Work.create({
-      marca: work.marca,
-      uuid: work._id.toString().replace(/"/, ''),
-      modelo: work.modelo,
-      emei: work.emei,
-      StateId: work.estado.toString().replace(/"/, ''),
-      recargo: work.recargo,
-      descuento: work.descuento,
-      precio: work.precio,
-      fachasEncontradas: work.fachasEncontradas,
-      observaciones: work.observaciones,
-      descripcion: work.descripcion,
-      UserId: work.cliente.toString().replace(/"/, ''),
-      createdAt: work.fechaInicio,
-      fechaFin: work.fechaFin,
-      tieneContrasena: work.tieneContrasena,
-      esPatron: work.esPatron,
-      contrasena: work.contrasena,
-      patron: work.patron,
-      codigo: work.codigo,
-      total: work.total,
-    });
-    work.states.map(async (state) => {
-      var searchState = await st.findOne({ where: { name: state.nombre } });
-      await WorksState.create({
-        WorkId: work._id.toString().replace(/"/, ''),
-        StateId: searchState.uuid,
-        date: state.fecha,
-        createdAt: state.fecha,
-      });
-    });
-  });
-
-  res.status(200).json({
-    status: 'success',
-    results: works.length,
-    data: {
-      works,
-    },
-  });
-};
