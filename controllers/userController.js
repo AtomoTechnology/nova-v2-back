@@ -1,6 +1,6 @@
 const AppError = require('../helpers/AppError');
 const catchAsync = require('../helpers/catchAsync');
-const { User, Work, Contact } = require('./../models');
+const { User, Contact } = require('./../models');
 const factory = require('./factoryController');
 const { Op } = require('sequelize');
 const UserEx = require('../models2/userModel');
@@ -100,35 +100,3 @@ exports.deleteMe = factory.update(User, ['active']);
 exports.contact = factory.all(Contact);
 exports.createContact = factory.create(Contact, null, { mail: true });
 exports.deleteContact = factory.delete(Contact);
-
-exports.migrateUsers = catchAsync(async (req, res) => {
-  let query = UserEx.find().limit(1);
-  // return ;
-  const users = await query;
-  // users.forEach(async (user) => {
-  //   await User.create({
-  //     dni: user.dni,
-  //     uuid: user._id.toString().replace(/"/, ''),
-  //     name: user.name,
-  //     email: user.email,
-  //     phone1: user.phone1,
-  //     phone2: user.phone2,
-  //     direction: user.direction,
-  //     active: user.active,
-  //     nota: user.nota,
-  //     role: user.role,
-  //     password: user.password,
-  //     passwordChangedAt: user.passwordChangedAt,
-  //     createdAt: user.createAt,
-  //     photo: user?.photo ? user.photo : '',
-  //   });
-  // });
-
-  res.status(200).json({
-    status: 'successs',
-    results: users.length,
-    data: {
-      users,
-    },
-  });
-});

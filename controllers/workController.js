@@ -7,6 +7,7 @@ const path = require('path');
 const os = require('os');
 const factory = require('./factoryController');
 const { Op } = require('sequelize');
+const WorkMail = require('../helpers/CreateWorkMail');
 
 exports.createWork = catchAsync(async (req, res, next) => {
   const newWork = new Work(req.body);
@@ -20,6 +21,17 @@ exports.createWork = catchAsync(async (req, res, next) => {
     WorkId: work.uuid,
     StateId: newWork.StateId,
   });
+
+  // SEND MAIL
+  const workMail = await Work.findOne({
+    where: { id: work.id },
+    include: [
+      { model: st, attributes: ['name'] },
+      { model: User, attributes: ['name', 'email'] },
+    ],
+    limit: 1,
+  });
+  new WorkMail(workMail).create();
 
   res.status(201).json({
     status: 'success',
@@ -203,7 +215,6 @@ exports.UpdateStatesToArray = catchAsync(async (req, res, next) => {
 
 exports.getWorksByDataAndTurnedinState = catchAsync(async (req, res, next) => {
   const { startDate, endDate } = req.body;
-  console.log(startDate, endDate);
   const state = await st.findOne({ where: { name: 'Entregado' } });
   const works = await Work.findAll({
     where: {

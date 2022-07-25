@@ -2,17 +2,15 @@ const nodemailer = require('nodemailer');
 const pug = require('pug');
 const htmlToText = require('html-to-text');
 
-module.exports = class EmailResetPassword {
+module.exports = class WorkMail {
   constructor(data) {
-    this.to = data.email;
-    this.message = data.message;
+    this.to = data.User.email;
+    this.data = data;
     this.from = `Nova Technology <${process.env.EMAIL_FROM}>`;
-    this.url = data.url;
   }
 
   newTransport() {
     if (process.env.NODE_ENV === 'production') {
-      // Sendgrid
       return nodemailer.createTransport({
         service: 'SendGrid',
         auth: {
@@ -36,8 +34,8 @@ module.exports = class EmailResetPassword {
   async send(template, subject) {
     // 1) Render HTML based on a pug template
     const html = pug.renderFile(`${__dirname}/../views/email/${template}.pug`, {
-      message: this.message,
-      url: this.url,
+      work: this.data,
+      subject,
     });
 
     // 2) Define email options
@@ -53,7 +51,7 @@ module.exports = class EmailResetPassword {
     await this.newTransport().sendMail(mailOptions);
   }
 
-  async sendResetPass() {
-    await this.send('passwordReset', 'Resetear contraseña');
+  async create() {
+    await this.send('createWork', 'Nuevo trabajo');
   }
 };

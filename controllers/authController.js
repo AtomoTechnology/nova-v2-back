@@ -68,7 +68,7 @@ exports.signUp = catchAsync(async (req, res, next) => {
 
   //send email ${req.get('host')}
 
-  const url = `${req.protocol}://novatechnologyargentina.com/clients/${newUser.id}`;
+  const url = `${req.protocol}://novatechnologyargentina.com/profile`;
   await new Email(newUser, url).sendWelcome();
 
   createSendToken(newUser, 201, res);
@@ -158,7 +158,7 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
   const resetURL = `${req.protocol}://novatechnologyargentina.com/resetPassword/${resetToken}`;
   const message = `¿Olvidaste tu contraseña ? hace click  en este enlace  : ${resetURL}  para resetear tu contraseña.`;
   try {
-    await new EmailResetPassword({ url: resetURL, message }).sendResetPass();
+    await new EmailResetPassword({ url: resetURL, message, email: user.email }).sendResetPass();
 
     res.status(200).json({
       ok: true,
