@@ -1,12 +1,20 @@
 'use strict';
 const { Model } = require('sequelize');
-const { User } = require('../models');
 module.exports = (sequelize, DataTypes) => {
   class Work extends Model {
     static associate(models) {
       Work.belongsTo(models.State, { foreignKey: 'StateId', targetKey: 'uuid' });
       // join with uuid of User table...
       Work.belongsTo(models.User, { foreignKey: 'UserId', targetKey: 'uuid' });
+      Work.belongsTo(models.User, {
+        foreignKey: {
+          name: 'assignedtoId',
+          allowNull: true,
+          defaultValue: null,
+        },
+        as: 'assignedTo',
+        targetKey: 'uuid',
+      });
       // models.User.hasMany(models.Work, { foreignKey: 'UserId', sourceKey: 'uuid' });
       Work.belongsToMany(models.State, {
         through: 'worksstates',
@@ -19,17 +27,11 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: 'WorkId',
         sourceKey: 'uuid',
       });
-
-      //    estado: {
-      //   type: Schema.Types.ObjectId,
-      //   ref: 'State',
-      //   required: [true, 'El estado es obligatorio'],
-      // },
-      // cliente: {
-      //   type: Schema.Types.ObjectId,
-      //   ref: 'Client',
-      //   required: [true, ' Es obligatorio el cliente'],
-      // },
+      // Work.hasOne(models.User, {
+      //   as: 'assignedTo',
+      //   foreignKey: 'WorkId',
+      //   sourceKey: 'uuid',
+      // });
     }
   }
   Work.init(
@@ -39,6 +41,10 @@ module.exports = (sequelize, DataTypes) => {
         autoIncrement: true,
         primaryKey: true,
         type: DataTypes.INTEGER,
+      },
+      AssignedToId: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
       },
       uuid: {
         type: DataTypes.UUID,

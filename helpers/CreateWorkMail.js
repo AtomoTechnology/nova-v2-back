@@ -54,4 +54,7 @@ module.exports = class WorkMail {
   async create() {
     await this.send('createWork', 'Nuevo trabajo');
   }
+  async sendEmailWorkDone() {
+    await this.send('doneWork', 'Trabajo terminado');
+  }
 };

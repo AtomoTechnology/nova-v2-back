@@ -14,10 +14,10 @@
     "dialect": "mysql"
   },
   "production": {
-    "username": "root",
-    "password": null,
-    "database": "database_production",
-    "host": "127.0.0.1",
+    "username": "novaitfl_root",
+    "password": "nicolastrabichet2022",
+    "database": "novaitfl_nova-v2",
+    "host": "localhost",
     "dialect": "mysql"
   }
 }

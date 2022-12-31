@@ -109,6 +109,7 @@ exports.findByUuid = (model, options = null) =>
 
 exports.update = (model, fieldsAllowed) =>
   catchAsync(async (req, res, next) => {
+    // return;
     if (!req.params.id) {
       return next(new AppError('Necesita un id para poder actualizar un documento', 401));
     }

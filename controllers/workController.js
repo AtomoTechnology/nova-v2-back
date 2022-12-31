@@ -9,6 +9,11 @@ const factory = require('./factoryController');
 const { Op } = require('sequelize');
 const WorkMail = require('../helpers/CreateWorkMail');
 
+const client = require('twilio')(
+  process.env.TWILIO_ACCOUNT_ID_NOVA_TECH_2022,
+  process.env.TWILIO_AUTH_TOKEN_NOVA_TECH_2022
+);
+
 exports.createWork = catchAsync(async (req, res, next) => {
   const newWork = new Work(req.body);
   do {
@@ -27,10 +32,33 @@ exports.createWork = catchAsync(async (req, res, next) => {
     where: { id: work.id },
     include: [
       { model: st, attributes: ['name'] },
-      { model: User, attributes: ['name', 'email'] },
+      { model: User, attributes: ['name', 'email', 'phone1', 'phone2'] },
     ],
     limit: 1,
   });
+
+  //  send a whatsapp message
+  // https://wa.me/919988776655?text=How%20are%20you%20
+
+  //   client.messages
+  //     .create({
+  //       body: `
+  // Hola ${workMail.User.name}, tiene un nuevo trabajo \n
+  // Equipo : ${workMail.marca} | ${workMail.modelo} \n
+  // Codigo : ${workMail.codigo} \n
+  // Estado : ${workMail.State.name} \n
+  // Total : $${workMail.total} \n
+  // Puede consultar el estado de tu trabajo en este enlace 👇👇
+  // https://www.novatechnologyargentina.com/myworkMails/${workMail.id}/${workMail.uuid} \n
+  // Si necesitas cualquier ayuda haznos saber sin problema estaremos aqui para ayudarte con mucho amor ! \n
+  // Nicolas Trabichet , CEO
+  //       `,
+  //       from: 'whatsapp:+16693381285',
+  //       to: `whatsapp:${workMail.User.phone1}`,
+  //     })
+  //     .then((message) => console.log(message.sid))
+  //     .done();
+
   new WorkMail(workMail).create();
 
   res.status(201).json({
@@ -43,6 +71,8 @@ exports.getAllWorks = factory.all(Work, {
   include: [
     { model: User, attributes: ['name', 'photo'] },
     { model: st, attributes: ['name'] },
+    { model: User, as: 'assignedTo', attributes: ['name'] },
+
     {
       model: WorksState,
       as: 'states',
@@ -77,10 +107,15 @@ exports.all = catchAsync(async (req, res, next) => {
   }
 
   const docs = await Work.findAndCountAll({
-    // where: req.query,
+    where: {
+      StateID: {
+        [Op.ne]: process.env.WORK_STATE_ID_GIVEN,
+      },
+    },
     include: [
       { model: st, attributes: ['name'] },
       { model: User, attributes: ['name', 'photo'] },
+      { model: User, as: 'assignedTo', attributes: ['name'] },
     ],
     order: [
       ['createdAt', 'DESC'],
@@ -120,8 +155,9 @@ exports.all = catchAsync(async (req, res, next) => {
 
 exports.find = factory.find(Work, {
   include: [
-    { model: User, attributes: ['name', 'photo', 'dni', 'phone1', 'uuid'] },
+    { model: User, attributes: ['name', 'photo', 'dni', 'phone1', 'uuid', 'id', 'email'] },
     { model: st, attributes: ['name'] },
+    { model: User, as: 'assignedTo', attributes: ['name', 'photo', 'dni', 'phone1', 'uuid', 'id'] },
     {
       model: WorksState,
       as: 'states',
@@ -142,7 +178,13 @@ exports.find = factory.find(Work, {
 
 exports.updateWork = catchAsync(async (req, res, next) => {
   const workId = req.params.id;
-  const work = await Work.findByPk(workId);
+  const work = await Work.findByPk(workId, {
+    include: [
+      { model: st, attributes: ['name'] },
+      { model: User, attributes: ['name', 'email', 'phone1', 'phone2'] },
+    ],
+  });
+
   if (!work) return next(new AppError('No se encontró trabajo con ese id', 404));
   const newWork = { ...req.body };
   const stateToModify = await st.findOne({ where: { uuid: newWork.StateId } });
@@ -158,6 +200,10 @@ exports.updateWork = catchAsync(async (req, res, next) => {
       WorkId: work.uuid,
       StateId: newWork.StateId,
     });
+  }
+
+  if (stateToModify.name === 'Terminado') {
+    new WorkMail(work).sendEmailWorkDone();
   }
 
   res.status(200).json({
@@ -189,6 +235,32 @@ exports.deleteWork = catchAsync(async (req, res, next) => {
     status: 'success',
     ok: true,
     data: null,
+  });
+});
+exports.sendMailDoneWork = catchAsync(async (req, res, next) => {
+  if (!req.body.work) {
+    return next(new AppError('El trabajo no existe', 401));
+  }
+  // if (!req.query.id) {
+  //   return next(new AppError('Necesitas un id para poder mandar el mail. ', 401));
+  // }
+
+  // return;
+
+  // const work = await Work.findByPk(req.query.id, {
+  //   include: [
+  //     { model: st, attributes: ['name'] },
+  //     { model: User, attributes: ['name', 'email', 'phone1', 'phone2'] },
+  //   ],
+  // });
+  // if (!work) return next(new AppError('No se encontró trabajo con ese id', 404));
+  // if (!work.User.email) return;
+  new WorkMail(req.body.work).sendEmailWorkDone();
+
+  res.status(200).json({
+    status: 'success',
+    ok: true,
+    message: 'Mail enviado con exito!',
   });
 });
 

@@ -18,14 +18,24 @@ usersRouter.use(authController.protect);
 usersRouter.post('/renewToken', authController.renewToken);
 usersRouter.patch('/updateMyPassword', authController.updatePassword);
 usersRouter.patch('/updateMe', userController.GetMe, userController.updateMe);
-usersRouter.get('/me', authController.restrictTo('user'), userController.GetMe, userController.find);
+usersRouter.get('/me', userController.GetMe, userController.find);
 usersRouter.delete('/deleteMe', authController.restrictTo('user'), userController.setDeleteMe, userController.deleteMe);
 usersRouter.post('/updateAvatar/:id', authController.restrictTo('admin', 'tecnico'), userController.UpdateAvatar);
+usersRouter.delete('/updateAvatar/:id', authController.restrictTo('admin', 'tecnico'), userController.DeleteUserAvatar);
 //
 
 usersRouter.route('/').get(authController.restrictTo('admin', 'tecnico'), userController.allPagination);
 usersRouter.route('/all').get(authController.restrictTo('admin', 'tecnico'), userController.all);
 usersRouter.route('/search/:filter').get(authController.restrictTo('admin', 'tecnico'), userController.SearchUser);
+usersRouter
+  .route('/getUsersByRoles')
+  .get(authController.restrictTo('admin', 'tecnico'), userController.getUsersByRoles);
+usersRouter
+  .route('/getUsersNextRecentBirthday')
+  .get(authController.restrictTo('admin', 'tecnico'), userController.getUsersNextRecentBirthday);
+usersRouter
+  .route('/sendMessageToUser')
+  .post(authController.restrictTo('admin', 'tecnico'), userController.sendMessageToUser);
 usersRouter
   .route('/:id')
   .get(userController.find)

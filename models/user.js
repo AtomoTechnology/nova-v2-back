@@ -6,6 +6,7 @@ module.exports = (sequelize, DataTypes) => {
   class User extends Model {
     static associate(models) {
       User.hasMany(models.Work, { foreignKey: 'UserId', sourceKey: 'uuid' });
+      // User.hasMany(models.Work, { foreignKey: 'assignedToId', as: 'assignedTo', sourceKey: 'uuid' });
       User.hasMany(models.Order, { foreignKey: 'UserId', sourceKey: 'uuid' });
     }
   }
@@ -56,8 +57,26 @@ module.exports = (sequelize, DataTypes) => {
       phone2: {
         type: DataTypes.STRING(20),
       },
+      country: {
+        type: DataTypes.STRING(50),
+      },
+      province: {
+        type: DataTypes.STRING(50),
+      },
+      city: {
+        type: DataTypes.STRING(50),
+      },
       direction: {
         type: DataTypes.STRING(100),
+      },
+      directionNumber: {
+        type: DataTypes.STRING(5),
+      },
+      floor: {
+        type: DataTypes.STRING(2),
+      },
+      dept: {
+        type: DataTypes.STRING(2),
       },
       nota: {
         type: DataTypes.STRING(100),
@@ -74,15 +93,16 @@ module.exports = (sequelize, DataTypes) => {
           // },
         },
         set(value = '') {
-          this.setDataValue('email', value.toLowerCase());
+          this.setDataValue('email', value.trim().toLowerCase());
         },
       },
       photo: DataTypes.TEXT('long'),
+      photoPublicId: DataTypes.STRING,
       role: {
         type: DataTypes.STRING(15),
         defaultValue: 'user',
         validate: {
-          isIn: [['user', 'tecnico', 'admin']],
+          isIn: [['user', 'tecnico', 'admin', 'provider']],
         },
       },
       password: {
@@ -96,17 +116,7 @@ module.exports = (sequelize, DataTypes) => {
         },
         // select: false,
       },
-      // passwordConfirm: {
-      //   type: DataTypes.STRING,
-      //   // required: [true, 'Las contraseñas no coinciden.'],
-      //   validate: {
-      //     customValidator(value) {
-      //       if (value === null || this.password !== value) {
-      //         throw new Error('Las contraseñas no coinciden.');
-      //       }
-      //     },
-      //   },
-      // },
+
       passwordChangedAt: DataTypes.DATE,
       passwordResetToken: DataTypes.STRING,
       passwordResetExpires: DataTypes.DATE,
@@ -119,6 +129,16 @@ module.exports = (sequelize, DataTypes) => {
       createdAt: {
         allowNull: false,
         type: DataTypes.DATE,
+      },
+      birthday: {
+        allowNull: true,
+        type: DataTypes.DATEONLY,
+        defaultValue: null,
+        // set(value) {
+        //   if (value == '') {
+        //     this.setDataValue('email', null);
+        //   }
+        // },
       },
       updatedAt: {
         allowNull: true,

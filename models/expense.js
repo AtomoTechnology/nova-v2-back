@@ -21,11 +21,16 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.INTEGER,
         allowNull: false,
       },
-      createdAt: {
-        allowNull: false,
-        type: DataTypes.DATE,
+      category: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        defaultValue: 'Varios',
       },
-      updatedAt: {
+      type: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      createdAt: {
         allowNull: false,
         type: DataTypes.DATE,
       },

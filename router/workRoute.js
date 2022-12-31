@@ -23,6 +23,7 @@ router
 router.delete('/', authController.restrictTo('admin'), workController.deleteAll);
 // router.route('/generateOrder/:id').post(workController.GenerateOrder);
 router.route('/download/Order').get(workController.DownloadOrder);
+router.route('/sendMailDoneWork').post(authController.restrictTo('admin', 'tecnico'), workController.sendMailDoneWork);
 router.post('/historialWork/all', authController.restrictTo('admin'), workController.getWorksByDataAndTurnedinState);
 
 module.exports = router;

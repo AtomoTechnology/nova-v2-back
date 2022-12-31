@@ -5,7 +5,27 @@ const { cloudinary } = require('../helpers/cloudinary');
 
 // exports.create = factory.create(Product);
 exports.all = factory.all(Product);
-exports.delete = factory.delete(Product);
+exports.delete = catchAsync(async (req, res, next) => {
+  const ids = JSON.parse(req.body.photos)
+    .split(',')
+    .map((p) => p.split('/')[p.split('/').length - 2] + '/' + p.split('/').pop().split('.')[0]);
+
+  if (ids.length) {
+    const resp = await cloudinary.api.delete_resources(ids);
+    await Product.destroy({
+      where: {
+        id: req.params.id,
+      },
+    });
+  }
+
+  res.status(200).json({
+    ok: true,
+    sucsess: 'success',
+    data: null,
+  });
+});
+
 exports.update = factory.update(Product, [
   'model',
   'trademark',
